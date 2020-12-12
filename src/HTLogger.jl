@@ -69,7 +69,7 @@ function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135
         elseif err isa TimeoutError
             @warn "A timeout occured. Trying to restart"
             close(s)
-            main(; path, baudrate, port,interval,lines_per_file)
+            run(; path, baudrate, port,interval,lines_per_file)
         else
             throw(err)
         end
