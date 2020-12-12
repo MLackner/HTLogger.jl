@@ -208,7 +208,7 @@ function find_port(;debug=false, baudrate=9600)
                 # If we successfully identified the logger close the connection
                 # and return the port. Otherwise continue with the next port in
                 # the list.
-                if readbuffer == "hyt939\r\n"
+                if readbuffer == "htlogger\r\n"
                     debug && println("Found the logger on port $p")
                     close(s)
                     return p
