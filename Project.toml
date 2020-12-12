@@ -1,7 +1,11 @@
-name = "HYT939Logger"
+name = "HTLogger"
 uuid = "1397e390-a8f5-4f51-a94c-8e6ea99caba8"
 authors = ["MLackner <lacknersmichael@gmail.com> and contributors"]
 version = "0.1.0"
+
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+SerialPorts = "5d0f9de7-4c7f-54f5-bec2-484e8c04014e"
 
 [compat]
 julia = "1"
