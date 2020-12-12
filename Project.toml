@@ -1,7 +1,7 @@
 name = "HTLogger"
 uuid = "1397e390-a8f5-4f51-a94c-8e6ea99caba8"
 authors = ["MLackner <lacknersmichael@gmail.com> and contributors"]
-version = "0.1.1"
+version = "0.1.2"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
