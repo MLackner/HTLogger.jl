@@ -41,7 +41,7 @@ function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135
     # wait for board to be ready
     sleep(3)
 
-    filepath, nlines = get_logfile_for_writing(path, lines_per_file)
+    filepath, nlines = logfile_handling(path, lines_per_file)
 
     try
         while true
@@ -56,14 +56,13 @@ function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135
 
             nlines += 1
             if nlines >= lines_per_file
-                filepath, nlines = get_logfile_for_writing(path, lines_per_file)
+                filepath, nlines = logfile_handling(path, lines_per_file)
             end
 
             sleep(interval)
             
         end
     catch err
-        @show err
         if err isa InterruptException
             println("Logging terminated by user")
         elseif err isa TimeoutError
@@ -209,7 +208,7 @@ function find_port(;debug=false, baudrate=9600)
                 # and return the port. Otherwise continue with the next port in
                 # the list.
                 if readbuffer == "htlogger\r\n"
-                    debug && println("Found the logger on port $p")
+                    println("Found the logger on port $p")
                     close(s)
                     return p
                 else
