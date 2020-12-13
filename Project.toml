@@ -8,6 +8,7 @@ Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 SerialPorts = "5d0f9de7-4c7f-54f5-bec2-484e8c04014e"
 
 [compat]
+SerialPorts = "0.2"
 julia = "1"
 
 [extras]
