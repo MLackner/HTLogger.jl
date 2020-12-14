@@ -32,22 +32,55 @@ Starts logging the temperature and humidity data from the connected device.
 * `debug`: prints messages that help to debug in case there are problems
 """
 function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135_000,debug=false)
-    # if no port is supplied search automatically
-    if port == ""
-        port = find_port(; debug, baudrate)
+    # In case an error occurs we will rerun the program recursively indefinetly
+    # until the program is interrupted. Collect the keyword arguments that get
+    # passed to the run function recursively. Do not specify the port in the
+    # rerun because the logger port could have been changed.
+    kwargs = (
+        path=path, 
+        baudrate=baudrate, 
+        interval=interval, 
+        lines_per_file=lines_per_file, 
+        debug=debug
+    )
+
+    # define the serial port as a constant reference so it is visible in all
+    # try-catch blocks
+    local s = Ref{SerialPort}()
+
+    try
+        # if no port is supplied search automatically
+        if port == ""
+            port = find_port(; debug, baudrate)
+        end
+
+        # connect to the device
+        s[] = SerialPort(port, baudrate)
+
+        # wait for board to be ready
+        sleep(3)
+    catch err
+        if err isa InterruptException
+            # in case the user interrupts the program
+            println("Terminated by user while trying to connect to logging device.")
+
+            return nothing
+        else
+            # if no port can be found or any other error occurs we will try running again
+            @warn "Could not find the device on any port. Make sure it is connected.\nTrying again..."
+            sleep(5)
+            run(; kwargs...)
+        end
     end
 
-    s = SerialPort(port, baudrate)
-    # wait for board to be ready
-    sleep(3)
-
+    # create a file / get the file to write to
     filepath, nlines = logfile_handling(path, lines_per_file)
 
     try
         while true
             t = string(Dates.now())
-            T = read_temperature(s)
-            H = read_rel_humidity(s)
+            T = read_temperature(s[])
+            H = read_rel_humidity(s[])
 
             open(filepath, "a") do io
                 newline = "$t\t$T\t$H\n"
@@ -65,16 +98,15 @@ function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135
     catch err
         if err isa InterruptException
             println("Logging terminated by user")
-        elseif err isa TimeoutError
-            @warn "A timeout occured. Trying to restart"
-            close(s)
-            run(; path, baudrate, port,interval,lines_per_file)
         else
-            throw(err)
+            @warn "A $err occured. Trying to start over..."
+            close(s[])
+            # do not specify the port! If the device is disconnected 
+            run(; kwargs...)
         end
     finally
         # close the serial port
-        close(s)
+        close(s[])
     end
 
     nothing
