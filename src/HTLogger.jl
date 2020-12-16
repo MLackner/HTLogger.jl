@@ -31,7 +31,7 @@ Starts logging the temperature and humidity data from the connected device.
 
 * `debug`: prints messages that help to debug in case there are problems
 """
-function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135_000,debug=false)
+function run(;path="log", baudrate=57600, port="",interval=5,lines_per_file = 135_000,debug=false)
     # In case an error occurs we will rerun the program recursively indefinetly
     # until the program is interrupted. Collect the keyword arguments that get
     # passed to the run function recursively. Do not specify the port in the
@@ -79,8 +79,11 @@ function run(;path="log", baudrate=9600, port="",interval=5,lines_per_file = 135
     try
         while true
             t = string(Dates.now())
-            T = read_temperature(s[])
-            H = read_rel_humidity(s[])
+            H, T = get_data(s[])
+            
+            # round these values
+            H = round(H, digits=3)
+            T = round(T, digits=2)
 
             open(filepath, "a") do io
                 newline = "$t\t$T\t$H\n"
@@ -202,16 +205,26 @@ function query(s, msg; timeout=2)
     read_line(s; timeout=timeout)
 end
 
-function read_temperature(s)
+function read_raw_data(s)
+    # clear what ever may be there
     readavailable(s)
-    readbuffer = query(s, "T\n")
-    parse(Float64, readbuffer)
+    readbuffer = query(s, "m\n")
+    parse(Tuple{UInt16, UInt16}, readbuffer)
 end
 
-function read_rel_humidity(s)
-    readavailable(s)
-    readbuffer = query(s, "H\n")
-    parse(Float64, readbuffer)
+function convert_temperature(T_raw)
+    (165 / 16383) * T_raw - 40
+end
+
+function convert_humidity(H_raw)
+    100 / 16383 * H_raw
+end
+
+function get_data(s)
+    H_raw, T_raw = read_raw_data(s)
+    H = convert_humidity(H_raw)
+    T = convert_temperature(T_raw)
+    H, T
 end
 
 function find_port(;debug=false, baudrate=9600)
@@ -233,7 +246,7 @@ function find_port(;debug=false, baudrate=9600)
             try # try to write and read from the port
                 # clear everything that is in the buffer
                 readavailable(s)
-                readbuffer = query(s, "I\n")
+                readbuffer = query(s, "i\n")
                 debug && println("Got '$readbuffer' from $p")
 
                 # If we successfully identified the logger close the connection
