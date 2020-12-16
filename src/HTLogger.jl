@@ -197,7 +197,7 @@ function read_line(s; timeout=10)
         end
     end
 
-    String(take!(readbuffer))
+    str = String(take!(readbuffer))
 end
 
 function query(s, msg; timeout=2)
@@ -208,8 +208,8 @@ end
 function read_raw_data(s)
     # clear what ever may be there
     readavailable(s)
-    readbuffer = query(s, "m\n")
-    parse(Tuple{UInt16, UInt16}, readbuffer)
+    readbuffer = query(s, "m")
+    parse.(UInt16, strip.(split(readbuffer, ',')))
 end
 
 function convert_temperature(T_raw)
@@ -227,7 +227,7 @@ function get_data(s)
     H, T
 end
 
-function find_port(;debug=false, baudrate=9600)
+function find_port(;debug=false, baudrate=57600)
     # get a list with all available serial ports
     ports = SerialPorts.list_serialports()
 
@@ -246,13 +246,13 @@ function find_port(;debug=false, baudrate=9600)
             try # try to write and read from the port
                 # clear everything that is in the buffer
                 readavailable(s)
-                readbuffer = query(s, "i\n")
+                readbuffer = query(s, "i")
                 debug && println("Got '$readbuffer' from $p")
 
                 # If we successfully identified the logger close the connection
                 # and return the port. Otherwise continue with the next port in
                 # the list.
-                if readbuffer == "htlogger\r\n"
+                if readbuffer == "htlogger\n"
                     println("Found the logger on port $p")
                     close(s)
                     return p
