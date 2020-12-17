@@ -212,10 +212,22 @@ function read_raw_data(s)
     parse.(UInt16, strip.(split(readbuffer, ',')))
 end
 
+"""
+    convert_temperature(T_raw) -> Float64
+
+Convert the raw temperature data from the sensor to the actual temperature in
+degree Celsius.
+"""
 function convert_temperature(T_raw)
     (165 / 16383) * T_raw - 40
 end
 
+"""
+    convert_humidity(H_raw) -> Float64
+
+Convert the raw humidity data from the sensor to the actual percent relative
+humidity.
+"""
 function convert_humidity(H_raw)
     100 / 16383 * H_raw
 end
